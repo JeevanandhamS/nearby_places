@@ -3,10 +3,9 @@ package com.jeeva.sms.data.webservice.dto;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import org.parceler.Parcel;
+import java.io.Serializable;
 
-@Parcel
-public class Geometry {
+public class Geometry implements Serializable {
 
     @SerializedName("location")
     @Expose

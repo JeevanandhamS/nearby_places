@@ -1,28 +1,21 @@
 package com.jeeva.sms.ui.home;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.jeeva.sms.R;
-import com.jeeva.sms.data.dto.Sms;
-import com.jeeva.sms.di.PlacesViewModelFactory;
-import com.jeeva.sms.permission.PermissionHandler;
-import com.jeeva.sms.ui.smslist.PlaceListViewModel;
-import com.jeeva.sms.ui.smslist.PlacesListAdapter;
+import com.jeeva.sms.data.Config;
+import com.jeeva.sms.data.webservice.PlacesWebService;
+import com.jeeva.sms.data.webservice.dto.NearByPlacesResponse;
+import com.jeeva.sms.data.webservice.dto.Place;
+import com.jeeva.sms.ui.placelist.PlaceListActivity;
 
-import org.zakariya.stickyheaders.StickyHeaderLayoutManager;
-
-import javax.inject.Inject;
+import java.util.List;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -30,140 +23,65 @@ import io.reactivex.schedulers.Schedulers;
 /**
  * Created by jeevanandham on 19/07/18
  */
-public class HomeActivity extends AppCompatActivity implements PermissionHandler.OnPermissionCallback {
+public class HomeActivity extends AppCompatActivity {
 
-    private static final String NEW_SMS_DATA = "newSmsData";
+    private static final String MY_CURRENT_LOCATION = "12.91601,77.65170";
 
-    private static final int APP_SETTINGS_REQUEST_CODE = 201;
-
-    @Inject
-    PlacesViewModelFactory mNotesViewModelFactory;
-
-    private PlacesListAdapter mNotesListAdapter;
-
-    private PlaceListViewModel mNotesListViewModel;
-
-    private PermissionHandler mPermissionHandler;
-
-    private long mLastFetchDate = System.currentTimeMillis();
-
-    private boolean mLoadingSms = false;
-
-    private boolean mAllSmsFetched = false;
-
-    public static Intent getNewSmsIntent(Context context, Sms smsData) {
-        Intent intent = new Intent(context, HomeActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(NEW_SMS_DATA, smsData);
-        return intent;
-    }
+    private EditText mEtSearchBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_place_list);
+        setContentView(R.layout.activity_home);
 
-        mPermissionHandler = new PermissionHandler(Manifest.permission.READ_SMS, this);
+        mEtSearchBox = findViewById(R.id.home_et_search_box);
 
-        makeSureSmsPermission();
-    }
+        findViewById(R.id.home_btn_go).setOnClickListener(v -> {
+            String keyword = mEtSearchBox.getText().toString();
 
-    private void makeSureSmsPermission() {
-        mPermissionHandler.checkPermission(this);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        mPermissionHandler.handleRequestPermissionResult(this, requestCode, grantResults);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (APP_SETTINGS_REQUEST_CODE == requestCode) {
-            if (mPermissionHandler.hasPermission(this)) {
-                onPermissionGranted();
+            if (keyword.length() > 2) {
+                startSearch(keyword);
             } else {
-                onPermissionDenied(false);
+                showToastMessage(R.string.keyword_length);
             }
-        }
+        });
     }
 
-    @Override
-    public void onPermissionGranted() {
-        setupRecyclerView();
-
-        mNotesListViewModel = ViewModelProviders.of(this, mNotesViewModelFactory)
-                .get(PlaceListViewModel.class);
-
-        fetchNextSmsList();
-    }
-
-    @Override
-    public void onPermissionDenied(boolean neverShowChecked) {
-        if (neverShowChecked) {
-            showToastMessage(R.string.provide_sms_permission);
-            openAppSettings();
-        } else {
-            showToastMessage(R.string.sms_permission_denied);
-        }
-    }
-
-    private void setupRecyclerView() {
-        RecyclerView rcvNotesList = findViewById(R.id.notes_list_rcv);
-        rcvNotesList.setLayoutManager(new StickyHeaderLayoutManager());
-
-        mNotesListAdapter = new PlacesListAdapter(this, getNewSmsIfAvailable());
-        rcvNotesList.setAdapter(mNotesListAdapter);
-    }
-
-    private Sms getNewSmsIfAvailable() {
-        Bundle bundle = getIntent().getExtras();
-        if(null != bundle && bundle.containsKey(NEW_SMS_DATA)) {
-            return (Sms) bundle.getSerializable(NEW_SMS_DATA);
-        }
-
-        return null;
-    }
-
-    private void showToastMessage(int messageResId) {
-        Toast.makeText(this, messageResId, Toast.LENGTH_LONG).show();
-    }
-
-    private void openAppSettings() {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", getPackageName(), null);
-        intent.setData(uri);
-        startActivityForResult(intent, APP_SETTINGS_REQUEST_CODE);
-    }
-
-    @Override
-    public void onBottomReached() {
-        fetchNextSmsList();
-    }
-
-    @SuppressLint("CheckResult")
-    private void fetchNextSmsList() {
-        if(!mAllSmsFetched && !mLoadingSms) {
-            mLoadingSms = true;
-
-            mNotesListViewModel.getSmsList(mLastFetchDate)
+    private void startSearch(String keyword) {
+        if (hasInternet()) {
+            PlacesWebService.getInstance().getPlacesService()
+                    .getNearByPlaces(MY_CURRENT_LOCATION, 500, keyword, Config.PLACES_API_KEY)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(smsList -> {
-                        if(smsList.size() > 0) {
-                            mLastFetchDate = smsList.get(smsList.size() - 1).getReceivedDate();
-
-                            mNotesListAdapter.updateSmsList(smsList);
-
-                        } else {
-                            mAllSmsFetched = true;
-                        }
-
-                        mLoadingSms = false;
-                    });
+                    .subscribe(placesResponse -> {
+                                List<Place> placeList = placesResponse.getResults();
+                                if (placeList.size() > 0) {
+                                    goToPlaceList(keyword, placesResponse);
+                                } else {
+                                    showToastMessage(R.string.no_places);
+                                }
+                            },
+                            throwable -> {
+                                throwable.printStackTrace();
+                                showToastMessage(R.string.network_error);
+                            }
+                    );
+        } else {
+            showToastMessage(R.string.no_internet);
         }
+    }
+
+    private void goToPlaceList(String keyword, NearByPlacesResponse placeList) {
+        PlaceListActivity.openPlacesActivity(this, keyword, placeList);
+    }
+
+    private void showToastMessage(int msgResId) {
+        Toast.makeText(this, msgResId, Toast.LENGTH_LONG).show();
+    }
+
+    private boolean hasInternet() {
+        NetworkInfo activeNetwork = ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE))
+                .getActiveNetworkInfo();
+        return null != activeNetwork && activeNetwork.isConnectedOrConnecting();
     }
 }

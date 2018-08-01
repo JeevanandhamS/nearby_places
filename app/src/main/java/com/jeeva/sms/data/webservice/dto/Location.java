@@ -5,8 +5,9 @@ import com.google.gson.annotations.SerializedName;
 
 import org.parceler.Parcel;
 
-@Parcel
-public class Location {
+import java.io.Serializable;
+
+public class Location implements Serializable {
 
     @SerializedName("lat")
     @Expose

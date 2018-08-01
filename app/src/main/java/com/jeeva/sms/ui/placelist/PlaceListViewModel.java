@@ -1,4 +1,4 @@
-package com.jeeva.sms.ui.smslist;
+package com.jeeva.sms.ui.placelist;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.ViewModel;

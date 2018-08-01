@@ -1,6 +1,7 @@
 package com.jeeva.sms.di;
 
 import com.jeeva.sms.ui.home.HomeActivity;
+import com.jeeva.sms.ui.placelist.PlaceListActivity;
 
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
@@ -13,4 +14,7 @@ public abstract class AppBinder {
 
     @ContributesAndroidInjector
     public abstract HomeActivity homeActivity();
+
+    @ContributesAndroidInjector
+    public abstract PlaceListActivity placeListActivity();
 }

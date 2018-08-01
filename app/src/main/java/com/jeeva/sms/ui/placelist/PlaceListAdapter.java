@@ -1,4 +1,4 @@
-package com.jeeva.sms.ui.smslist;
+package com.jeeva.sms.ui.placelist;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;

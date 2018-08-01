@@ -6,7 +6,7 @@ import android.os.Bundle;
 
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.jeeva.sms.data.webservice.PlacesWebService;
-import com.jeeva.sms.di.DaggerSmsComponent;
+import com.jeeva.sms.di.DaggerPlacesComponent;
 
 import javax.inject.Inject;
 
@@ -28,7 +28,7 @@ public class PlacesApplication extends Application implements HasActivityInjecto
         super.onCreate();
         AndroidThreeTen.init(this);
 
-        DaggerSmsComponent.builder().application(this)
+        DaggerPlacesComponent.builder().application(this)
                 .build().inject(this);
         registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
             @Override

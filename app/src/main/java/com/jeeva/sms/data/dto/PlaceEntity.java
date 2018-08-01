@@ -2,15 +2,13 @@ package com.jeeva.sms.data.dto;
 
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.support.annotation.NonNull;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import org.parceler.Parcel;
-
 import static com.jeeva.sms.data.dto.PlaceEntity.TABLE_NAME;
 
-@Parcel
 @Entity(tableName = TABLE_NAME)
 public class PlaceEntity {
 
@@ -25,6 +23,7 @@ public class PlaceEntity {
     private Double lng;
 
     @PrimaryKey
+    @NonNull
     @SerializedName("id")
     @Expose
     private String id;

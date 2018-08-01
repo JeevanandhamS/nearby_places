@@ -55,5 +55,7 @@ dependencies {
     implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofitVersion"
     implementation "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
 
-    implementation 'org.parceler:parceler:1.1.11'
+    implementation 'org.parceler:parceler-api:1.1.1'
+    annotationProcessor  'org.parceler:parceler:1.1.11'
+    implementation "com.google.android.gms:play-services-maps:$playServiceVersion"
 }

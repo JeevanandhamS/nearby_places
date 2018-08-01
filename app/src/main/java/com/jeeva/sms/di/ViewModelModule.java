@@ -3,7 +3,7 @@ package com.jeeva.sms.di;
 import android.arch.lifecycle.ViewModel;
 import android.arch.lifecycle.ViewModelProvider;
 
-import com.jeeva.sms.ui.smslist.PlaceListViewModel;
+import com.jeeva.sms.ui.placelist.PlaceListViewModel;
 
 import dagger.Binds;
 import dagger.Module;
